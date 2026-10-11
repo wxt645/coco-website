@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留言信息 · 寻梦环游记 - Coco</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 导航栏 -->
+    <nav>
+        <ul>
+            <li><a href="index.html">首页</a></li>
+            <li><a href="characters.html">人物介绍</a></li>
+            <li><a href="story.html">故事情节</a></li>
+            <li><a href="analysis.html">影片赏析</a></li>
+            <li><a href="guestbook.html" class="active">留言信息</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-wrap p-guestbook">
+        <!-- 万寿菊花瓣 -->
+        <div class="petal-layer" aria-hidden="true"></div>
+
+        <!-- 页头 -->
+        <header class="page-hero">
+            <p class="en">Guestbook</p>
+            <h1>留言信息</h1>
+            <p>在爱的记忆消失以前，请写下你的感动</p>
+        </header>
+
+        <!-- 留言板 -->
+        <section class="section">
+            <div class="guestbook-container">
+                <!-- 留言表单 -->
+                <div class="guestbook-form">
+                    <form id="messageForm">
+                        <div class="form-group">
+                            <label for="name">你的名字</label>
+                            <input type="text" id="name" placeholder="请输入你的名字" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">邮箱（选填）</label>
+                            <input type="email" id="email" placeholder="请输入你的邮箱">
+                        </div>
+                        <div class="form-group">
+                            <label for="message">留言内容</label>
+                            <textarea id="message" placeholder="写下你对《寻梦环游记》的感受吧..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn-submit">发表留言</button>
+                        <button type="button" class="btn-clear" id="clearBtn">清空我发表的留言</button>
+                    </form>
+                </div>
+
+                <!-- 留言列表 -->
+                <div class="messages-list" id="messagesList"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <p>本页面为《寻梦环游记》粉丝制作 · 电影版权归 <span>皮克斯动画工作室 / 迪士尼</span> 所有</p>
+        <p class="footer-sub">Remember Me · 铭记于心</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        (function () {
+            var STORAGE_KEY = 'coco-guestbook-messages';
+
+            // 预置留言
+            var DEFAULT_MESSAGES = [
+                {
+                    name: '影迷小王',
+                    date: '2024-01-15',
+                    text: '这部电影我看了三遍，每次看到可可认出她爸爸那段都会哭。"真正的死亡是世界上再没有一个人记得你"，这句话真的戳到我了。Remember Me 真的是影史最感人的摇篮曲！'
+                },
+                {
+                    name: '动画爱好者',
+                    date: '2024-02-20',
+                    text: '皮克斯的动画水准一如既往地在线，亡灵世界的色彩设计简直是一场视觉盛宴。而且影片对墨西哥文化的呈现非常尊重且深入，值得每一个喜欢电影的人观看。'
+                },
+                {
+                    name: '音乐人阿杰',
+                    date: '2024-03-10',
+                    text: '作为一个音乐人，这部电影让我深刻感受到音乐的力量。它不仅能连接人与人，还能跨越生与死的界限。Remember Me 那首摇篮曲的版本转换设计得太妙了！'
+                }
+            ];
+
+            var listEl = document.getElementById('messagesList');
+            var form = document.getElementById('messageForm');
+            var clearBtn = document.getElementById('clearBtn');
+
+            function escapeHtml(str) {
+                return String(str).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
+            }
+
+            function getSaved() {
+                try {
+                    var list = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                    return Array.isArray(list) ? list : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            function cardHTML(m) {
+                return '<div class="message-card">' +
+                    '  <div class="message-header">' +
+                    '    <span class="message-author">' + escapeHtml(m.name) + '</span>' +
+                    '    <span class="message-date">' + escapeHtml(m.date) + '</span>' +
+                    '  </div>' +
+                    '  <div class="message-text">' + escapeHtml(m.text) + '</div>' +
+                    '</div>';
+            }
+
+            function render() {
+                var all = getSaved().concat(DEFAULT_MESSAGES);
+                listEl.innerHTML = all.map(cardHTML).join('');
+            }
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var name = document.getElementById('name').value.trim();
+                var text = document.getElementById('message').value.trim();
+                if (!name || !text) {
+                    alert('请填写名字和留言内容～');
+                    return;
+                }
+
+                var now = new Date();
+                var dateStr = now.getFullYear() + '-' +
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(now.getDate()).padStart(2, '0');
+
+                var saved = getSaved();
+                saved.unshift({ name: name, date: dateStr, text: text });
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+                } catch (err) { /* 存储不可用时仅本次展示 */ }
+
+                render();
+                form.reset();
+                alert('留言发表成功！记得常回来看看～');
+            });
+
+            clearBtn.addEventListener('click', function () {
+                if (getSaved().length === 0) {
+                    alert('你还没有发表过留言哦～');
+                    return;
+                }
+                if (confirm('确定要清空你发表的所有留言吗？')) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    render();
+                }
+            });
+
+            render();
+        })();
+    </script>
+</body>
+</html>
